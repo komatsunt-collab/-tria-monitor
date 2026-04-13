@@ -7,13 +7,12 @@
 <title>Tria Monitor</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0c10;color:#e2e8f0;font-family:sans-serif}
+body{background:#0a0c10;color:#e2e8f0;font-family:sans-serif;min-height:100vh}
 header{padding:20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e2330;position:sticky;top:0;background:#0a0c10}
 .dot{width:8px;height:8px;border-radius:50%;background:#4b5563;display:inline-block;margin-right:8px}
 .dot.safe{background:#22c55e}
-.dot.warning{background:#f0a500;animation:p 1.5s infinite}
-.dot.danger{background:#ef4444;animation:p .8s infinite}
-@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.dot.warning{background:#f0a500}
+.dot.danger{background:#ef4444}
 @keyframes s{to{transform:rotate(360deg)}}
 .spin{width:16px;height:16px;border:2px solid #333;border-top-color:#f0a500;border-radius:50%;animation:s 1s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle}
 .card{margin:16px;padding:18px;border-radius:12px;border:1px solid #1e2330;background:#111318}
@@ -22,11 +21,13 @@ header{padding:20px;display:flex;justify-content:space-between;align-items:cente
 .card.danger{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06)}
 .lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
 .val{font-size:22px;font-weight:700}
-.safe .val{color:#22c55e}.warning .val{color:#f0a500}.danger .val{color:#ef4444}
+.safe .val,.safe .mv{color:#22c55e}
+.warning .val,.warning .mv{color:#f0a500}
+.danger .val,.danger .mv{color:#ef4444}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 16px}
 .mc{background:#111318;border:1px solid #1e2330;border-radius:12px;padding:16px}
-.mc.safe .mv{color:#22c55e}.mc.warning .mv{color:#f0a500}.mc.danger .mv{color:#ef4444}
-.mv{font-size:22px;font-weight:700}.ms{font-size:10px;color:#4b5563;margin-top:4px}
+.mv{font-size:22px;font-weight:700}
+.ms{font-size:10px;color:#4b5563;margin-top:4px}
 .sec{font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;margin:0 16px 8px}
 .al{margin:0 16px 8px;display:flex;gap:8px;padding:12px;border-radius:8px;border:1px solid transparent}
 .al.safe{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)}
@@ -34,8 +35,8 @@ header{padding:20px;display:flex;justify-content:space-between;align-items:cente
 .al.danger{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2)}
 .at{font-size:13px;line-height:1.5}
 .btn{display:block;width:calc(100% - 32px);margin:16px;padding:16px;background:#f0a500;color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer}
-.btn:disabled{background:#111318;color:#4b5563;border:1px solid #1e2330}
-.note{text-align:center;font-size:10px;color:#4b5563;padding:0 20px 40px;line-height:1.6}
+.note{text-align:center;font-size:10px;color:#4b5563;padding:0 20px 40px;line-height:1.8}
+.row{display:flex;justify-content:space-between;padding:10px 16px;background:#111318;border:1px solid #1e2330;border-radius:8px;margin:0 16px 6px}
 </style>
 </head>
 <body>
@@ -48,28 +49,75 @@ header{padding:20px;display:flex;justify-content:space-between;align-items:cente
 </div>
 <script>
 const T={apy_danger:5,apy_warning:7,tvl_baseline:5900000,tvl_drop_pct:20};
-const fU=v=>v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+v.toLocaleString();
 const lL={safe:'✅ 正常',warning:'🟡 注意',danger:'🔴 危険・撤退検討'};
 const lI={safe:'✓',warning:'△',danger:'⚠'};
+const fU=v=>v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+v.toLocaleString();
 
 async function check(){
   const dot=document.getElementById('dot');
   document.getElementById('tm').textContent='取得中...';
   document.getElementById('out').innerHTML='<span class="spin"></span>データ取得中...';
-  
+
   let apy=null,pools=[],tvl=null,pyusd={price:1.0,is_depegged:false};
-  
+
+  // APY取得（CORSプロキシ経由）
   try{
-    const r=await fetch('https://yields.llama.fi/pools');
+    const url='https://corsproxy.io/?'+encodeURIComponent('https://yields.llama.fi/pools');
+    const r=await fetch(url);
     const d=await r.json();
-    const t=d.data.filter(p=>p.symbol&&p.symbol.includes('USDC')&&p.chain==='Ethereum'&&['sentora','morpho','aave'].some(k=>p.project&&p.project.toLowerCase().includes(k)));
+    const t=(d.data||[]).filter(p=>
+      p.symbol&&p.symbol.includes('USDC')&&
+      p.chain==='Ethereum'&&
+      ['sentora','morpho','aave'].some(k=>p.project&&p.project.toLowerCase().includes(k))
+    );
     t.sort((a,b)=>(b.apy||0)-(a.apy||0));
-    if(t.length){apy=Math.round(t[0].apy*10)/10;pools=t.slice(0,5);}
-  }catch(e){}
-  
+    if(t.length){apy=Math.round((t[0].apy||0)*10)/10;pools=t.slice(0,5);}
+  }catch(e){console.log('APY error:',e)}
+
+  // TVL取得
   try{
-    const r=await fetch('https://api.llama.fi/protocol/sentora');
+    const url='https://corsproxy.io/?'+encodeURIComponent('https://api.llama.fi/protocol/sentora');
+    const r=await fetch(url);
     const d=await r.json();
     const ct=d.currentChainTvls||{};
-    let tot=Object.values(ct).reduce((s,v)=>s+parseFloat(v),0);
-    if(!tot&&d.tvl&&d.tvl.length)
+    let tot=Object.values(ct).reduce((s,v)=>s+parseFloat(v||0),0);
+    if(!tot&&d.tvl&&d.tvl.length)tot=parseFloat(d.tvl[d.tvl.length-1].totalLiquidityUSD||0);
+    if(tot>0)tvl=Math.round(tot);
+  }catch(e){console.log('TVL error:',e)}
+
+  // PYUSD価格取得
+  try{
+    const url='https://corsproxy.io/?'+encodeURIComponent('https://api.coingecko.com/api/v3/simple/price?ids=paypal-usd&vs_currencies=usd');
+    const r=await fetch(url);
+    const d=await r.json();
+    const pr=parseFloat(d['paypal-usd']?.usd||1);
+    pyusd={price:pr,is_depegged:pr<0.98||pr>1.02};
+  }catch(e){console.log('PYUSD error:',e)}
+
+  // 判定
+  let level='safe',alerts=[];
+  if(apy===null){alerts.push({t:'APYデータ取得失敗（後で再試行）',s:'warning'});level='warning';}
+  else if(apy<T.apy_danger){alerts.push({t:`🔴 APY ${apy}%に急落（基準:${T.apy_danger}%以下）`,s:'danger'});level='danger';}
+  else if(apy<T.apy_warning){alerts.push({t:`🟡 APY ${apy}%に低下（基準:${T.apy_warning}%以下）`,s:'warning'});level='warning';}
+  if(tvl){
+    const drop=Math.max(0,(T.tvl_baseline-tvl)/T.tvl_baseline*100);
+    if(drop>T.tvl_drop_pct){alerts.push({t:`🔴 TVL ${drop.toFixed(0)}%急減`,s:'danger'});level='danger';}
+    else if(drop>10){alerts.push({t:`🟡 TVL ${drop.toFixed(0)}%減少中`,s:'warning'});if(level!='danger')level='warning';}
+  }
+  if(pyusd.is_depegged){alerts.push({t:`🔴 PYUSDデペッグ検知($${pyusd.price.toFixed(4)})`,s:'danger'});level='danger';}
+  if(!alerts.length)alerts.push({t:'✅ 全指標が正常範囲内です',s:'safe'});
+
+  dot.className='dot '+level;
+  document.getElementById('tm').textContent=new Date().toLocaleString('ja-JP',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  const aL=apy===null?'warning':apy<T.apy_danger?'danger':apy<T.apy_warning?'warning':'safe';
+  const drop=tvl?Math.max(0,(T.tvl_baseline-tvl)/T.tvl_baseline*100):0;
+  const tL=!tvl?'warning':drop>T.tvl_drop_pct?'danger':drop>10?'warning':'safe';
+
+  document.getElementById('out').innerHTML=`
+    <div class="card ${level}">
+      <div class="lbl">総合判定</div>
+      <div class="val">${lL[level]}</div>
+    </div>
+    <div class="grid">
+      <div class="mc ${aL}"><div class="lbl">APY</div><div class="mv">${apy!​​​​​​​​​​​​​​​​
