@@ -1,6 +1,5 @@
 import json
 import urllib.request
-from http.server import BaseHTTPRequestHandler
 
 THRESHOLDS = {
     "apy_danger": 5.0,
@@ -60,18 +59,52 @@ def evaluate(apy, tvl, pyusd):
         alerts.append({"text": "APYデータを取得できませんでした", "severity": "warning"})
         level = "warning"
     elif apy < THRESHOLDS["apy_danger"]:
-        alerts.append({"text": f"APYが{apy}%に急落（基準:{THRESHOLDS['apy_danger']}%以下で危険）", "severity": "danger"})
+        alerts.append({"text": f"APYが{apy}%に急落", "severity": "danger"})
         level = "danger"
     elif apy < THRESHOLDS["apy_warning"]:
-        alerts.append({"text": f"APYが{apy}%に低下（基準:{THRESHOLDS['apy_warning']}%以下で注意）", "severity": "warning"})
+        alerts.append({"text": f"APYが{apy}%に低下", "severity": "warning"})
         if level != "danger":
             level = "warning"
-    if tvl is None:
-        alerts.append({"text": "TVLデータを取得できませんでした", "severity": "warning"})
-    else:
+    if tvl is not None:
         drop = max(0, (THRESHOLDS["tvl_baseline"] - tvl) / THRESHOLDS["tvl_baseline"] * 100)
         if drop > THRESHOLDS["tvl_drop_pct"]:
-            alerts.append({"text": f"TVLがベースラインから{drop:.0f}%急減", "severity": "danger"})
+            alerts.append({"text": f"TVLが{drop:.0f}%急減", "severity": "danger"})
             level = "danger"
         elif drop > 10:
-            alerts.append({"text": f"TVLが{drop:.0f}%減少中（要​​​​​​​​​​​​​​​​
+            alerts.append({"text": f"TVLが{drop:.0f}%減少中", "severity": "warning"})
+            if level != "danger":
+                level = "warning"
+    if pyusd.get("is_depegged"):
+        alerts.append({"text": f"PYUSDデペッグ検知", "severity": "danger"})
+        level = "danger"
+    if not alerts:
+        alerts.append({"text": "全指標が正常範囲内です", "severity": "safe"})
+    return level, alerts
+
+def handler(request):
+    try:
+        apy, pools = fetch_apy()
+        tvl = fetch_tvl()
+        pyusd = fetch_pyusd()
+        level, alerts = evaluate(apy, tvl, pyusd)
+        result = {
+            "ok": True,
+            "level": level,
+            "alerts": alerts,
+            "apy": apy,
+            "tvl": tvl,
+            "pyusd": pyusd,
+            "top_pools": pools,
+            "thresholds": THRESHOLDS,
+        }
+    except Exception as e:
+        result = {
+            "ok": False,
+            "error": str(e),
+            "level": "warning",
+            "alerts": [{"text": f"エラー:{e}", "severity": "warning"}],
+        }
+    return Response(
+        json.dumps(result, ensure_ascii=False),
+        headers={"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+    )
