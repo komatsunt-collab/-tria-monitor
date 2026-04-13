@@ -2,115 +2,74 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#0a0c10">
 <title>Tria Monitor</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0c10;color:#e2e8f0;font-family:sans-serif;min-height:100vh}
+body{background:#0a0c10;color:#e2e8f0;font-family:sans-serif}
 header{padding:20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e2330;position:sticky;top:0;background:#0a0c10}
-h1{font-size:16px;letter-spacing:.05em}
-.dot{width:8px;height:8px;border-radius:50%;background:#4b5563;margin-right:10px;display:inline-block}
+.dot{width:8px;height:8px;border-radius:50%;background:#4b5563;display:inline-block;margin-right:8px}
 .dot.safe{background:#22c55e}
-.dot.warning{background:#f0a500;animation:pulse 1.5s infinite}
-.dot.danger{background:#ef4444;animation:pulse .8s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.verdict{margin:16px;border-radius:14px;padding:18px 20px;border:1px solid #1e2330}
-.verdict.safe{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.06)}
-.verdict.warning{border-color:rgba(240,165,0,.4);background:rgba(240,165,0,.06)}
-.verdict.danger{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06)}
-.label{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
-.value{font-size:22px;font-weight:700}
-.safe .value{color:#22c55e}.warning .value{color:#f0a500}.danger .value{color:#ef4444}
+.dot.warning{background:#f0a500;animation:p 1.5s infinite}
+.dot.danger{background:#ef4444;animation:p .8s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes s{to{transform:rotate(360deg)}}
+.spin{width:16px;height:16px;border:2px solid #333;border-top-color:#f0a500;border-radius:50%;animation:s 1s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle}
+.card{margin:16px;padding:18px;border-radius:12px;border:1px solid #1e2330;background:#111318}
+.card.safe{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.06)}
+.card.warning{border-color:rgba(240,165,0,.4);background:rgba(240,165,0,.06)}
+.card.danger{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06)}
+.lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.val{font-size:22px;font-weight:700}
+.safe .val{color:#22c55e}.warning .val{color:#f0a500}.danger .val{color:#ef4444}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 16px}
-.card{background:#111318;border:1px solid #1e2330;border-radius:12px;padding:16px;position:relative;overflow:hidden}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.card.safe::before{background:#22c55e}.card.warning::before{background:#f0a500}.card.danger::before{background:#ef4444}
-.card .value{font-size:24px;font-weight:700}
-.card.safe .value{color:#22c55e}.card.warning .value{color:#f0a500}.card.danger .value{color:#ef4444}
-.sub{font-size:10px;color:#4b5563;margin-top:4px}
+.mc{background:#111318;border:1px solid #1e2330;border-radius:12px;padding:16px}
+.mc.safe .mv{color:#22c55e}.mc.warning .mv{color:#f0a500}.mc.danger .mv{color:#ef4444}
+.mv{font-size:22px;font-weight:700}.ms{font-size:10px;color:#4b5563;margin-top:4px}
 .sec{font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;margin:0 16px 8px}
-.bools{margin:0 16px 16px;display:flex;flex-direction:column;gap:6px}
-.brow{display:flex;justify-content:space-between;align-items:center;background:#111318;border:1px solid #1e2330;border-radius:10px;padding:12px 14px}
-.blabel{font-size:13px;color:#94a3b8}
-.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
-.badge.ok{color:#22c55e;background:rgba(34,197,94,.12)}
-.badge.ng{color:#ef4444;background:rgba(239,68,68,.12)}
-.alerts{margin:0 16px 16px;display:flex;flex-direction:column;gap:8px}
-.arow{display:flex;gap:10px;padding:12px 14px;border-radius:10px;border:1px solid transparent}
-.arow.safe{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)}
-.arow.warning{background:rgba(240,165,0,.06);border-color:rgba(240,165,0,.2)}
-.arow.danger{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2)}
-.atext{font-size:13px;line-height:1.5}
-.btn{display:block;width:calc(100% - 32px);margin:0 16px 16px;padding:16px;background:#f0a500;color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer}
+.al{margin:0 16px 8px;display:flex;gap:8px;padding:12px;border-radius:8px;border:1px solid transparent}
+.al.safe{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)}
+.al.warning{background:rgba(240,165,0,.06);border-color:rgba(240,165,0,.2)}
+.al.danger{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2)}
+.at{font-size:13px;line-height:1.5}
+.btn{display:block;width:calc(100% - 32px);margin:16px;padding:16px;background:#f0a500;color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer}
 .btn:disabled{background:#111318;color:#4b5563;border:1px solid #1e2330}
 .note{text-align:center;font-size:10px;color:#4b5563;padding:0 20px 40px;line-height:1.6}
-.spin{width:18px;height:18px;border:2px solid #1e2330;border-top-color:#f0a500;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle}
-@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <header>
   <div><span class="dot" id="dot"></span><strong>TRIA MONITOR</strong></div>
-  <div style="font-size:10px;color:#4b5563" id="time">--</div>
+  <div style="font-size:10px;color:#4b5563" id="tm">--</div>
 </header>
-<div id="main" style="padding:20px;text-align:center;color:#94a3b8">
+<div id="out" style="padding:30px;text-align:center;color:#94a3b8">
   <span class="spin"></span>データ取得中...
 </div>
 <script>
 const T={apy_danger:5,apy_warning:7,tvl_baseline:5900000,tvl_drop_pct:20};
 const fU=v=>v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+v.toLocaleString();
-const fP=v=>v+'%';
-const fT=d=>new Date(d).toLocaleString('ja-JP',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 const lL={safe:'✅ 正常',warning:'🟡 注意',danger:'🔴 危険・撤退検討'};
 const lI={safe:'✓',warning:'△',danger:'⚠'};
 
-async function run(){
+async function check(){
   const dot=document.getElementById('dot');
-  dot.className='dot';
-  document.getElementById('time').textContent='取得中...';
-  document.getElementById('main').innerHTML='<span class="spin"></span>データ取得中...';
+  document.getElementById('tm').textContent='取得中...';
+  document.getElementById('out').innerHTML='<span class="spin"></span>データ取得中...';
+  
+  let apy=null,pools=[],tvl=null,pyusd={price:1.0,is_depegged:false};
+  
   try{
-    const r=await fetch('/api/check');
+    const r=await fetch('https://yields.llama.fi/pools');
     const d=await r.json();
-    dot.className='dot '+d.level;
-    document.getElementById('time').textContent=fT(new Date());
-    const aL=d.apy==null?'warning':d.apy<T.apy_danger?'danger':d.apy<T.apy_warning?'warning':'safe';
-    const drop=d.tvl?Math.max(0,(T.tvl_baseline-d.tvl)/T.tvl_baseline*100):0;
-    const tL=d.tvl==null?'warning':drop>T.tvl_drop_pct?'danger':drop>10?'warning':'safe';
-    document.getElementById('main').innerHTML=`
-      <div class="verdict ${d.level}">
-        <div class="label">総合判定</div>
-        <div class="value">${lL[d.level]||d.level}</div>
-      </div>
-      <div class="grid">
-        <div class="card ${aL}">
-          <div class="label">APY</div>
-          <div class="value">${d.apy!=null?fP(d.apy):'—'}</div>
-          <div class="sub">${aL==='safe'?'正常':aL==='warning'?'注意':'危険'}</div>
-        </div>
-        <div class="card ${tL}">
-          <div class="label">TVL</div>
-          <div class="value">${d.tvl!=null?fU(d.tvl):'—'}</div>
-          <div class="sub">${drop>0?'▼'+drop.toFixed(0)+'%':'基準値内'}</div>
-        </div>
-      </div>
-      <div class="sec">項目別チェック</div>
-      <div class="bools">
-        <div class="brow"><span class="blabel">PYUSDデペッグなし</span><span class="badge ${d.pyusd&&!d.pyusd.is_depegged?'ok':'ng'}">${d.pyusd?d.pyusd.is_depegged?'異常':'正常':'—'}</span></div>
-        <div class="brow"><span class="blabel">APY正常範囲</span><span class="badge ${aL==='safe'?'ok':'ng'}">${aL==='safe'?'正常':aL==='warning'?'注意':'危険'}</span></div>
-      </div>
-      <div class="sec">アラート</div>
-      <div class="alerts">${d.alerts.map(a=>`<div class="arow ${a.severity}"><span>${lI[a.severity]||'·'}</span><span class="atext">${a.text}</span></div>`).join('')}</div>
-      <button class="btn" onclick="run()">▶ 今すぐチェック</button>
-      <p class="note">DeFiLlama・CoinGeckoのリアルデータを使用<br>投資判断はご自身の責任で行ってください</p>
-    `;
-  }catch(e){
-    dot.className='dot warning';
-    document.getElementById('main').innerHTML=`<p style="color:#f0a500;padding:40px 20px">${e.message}</p><button class="btn" onclick="run()">▶ 再試行</button>`;
-  }
-}
-run();
-</script>
-</body>
-</html>
+    const t=d.data.filter(p=>p.symbol&&p.symbol.includes('USDC')&&p.chain==='Ethereum'&&['sentora','morpho','aave'].some(k=>p.project&&p.project.toLowerCase().includes(k)));
+    t.sort((a,b)=>(b.apy||0)-(a.apy||0));
+    if(t.length){apy=Math.round(t[0].apy*10)/10;pools=t.slice(0,5);}
+  }catch(e){}
+  
+  try{
+    const r=await fetch('https://api.llama.fi/protocol/sentora');
+    const d=await r.json();
+    const ct=d.currentChainTvls||{};
+    let tot=Object.values(ct).reduce((s,v)=>s+parseFloat(v),0);
+    if(!tot&&d.tvl&&d.tvl.length)
